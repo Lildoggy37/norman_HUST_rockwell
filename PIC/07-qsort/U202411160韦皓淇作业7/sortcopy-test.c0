@@ -1,0 +1,22 @@
+#use <conio>
+#use <string>
+
+int main()
+{   
+    string [] A =alloc_array(string,3);
+    A[0]="cc";
+    A[1]="bb";
+    A[2]="aa";
+    string[] B =sortcopy(A,0,3);
+
+    //@assert \length(B)==3;
+    //@assert string_equal(B[0],"aa");
+    //@assert string_equal(B[1],"bb");
+    //@assert string_equal(B[2],"cc");
+
+    //@assert string_equal(A[0],"cc");
+    //@assert string_equal(A[1],"bb");
+    //@assert string_equal(A[2],"aa");
+    //@assert \length(A) == 3 ;
+    return 0;
+}

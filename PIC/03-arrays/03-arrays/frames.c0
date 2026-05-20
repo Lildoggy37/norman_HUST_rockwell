@@ -1,0 +1,15 @@
+int POW(int x, int y) {
+  if (y == 0) return 1;
+  return x * POW(x, y-1);
+}
+
+int square(int n) {
+  return n * n;
+}
+
+int main() {
+  int x = 10;
+  int y = square(x - 1);
+  //@assert y == POW(x-1,2);
+  return y;
+}

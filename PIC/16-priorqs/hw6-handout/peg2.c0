@@ -1,0 +1,121 @@
+/*
+ * Peg solitaire solver
+ *
+ * 15-122 Principles of Imperative Computation */
+
+#use <args>
+#use <conio>
+#use <util>
+
+typedef int move;
+
+int row_start(move m)
+{
+  return (m/64)/8;
+}
+
+int col_start(move m)
+{
+  return (m/64)%8;
+}
+
+int row_end(move m)
+{
+  return (m%64)/8;
+}
+
+int col_end(move m)
+{
+  return (m%64)%8;
+}
+//检查由r,c 向 dr,dc移动是否是合法的
+bool is_valid_move(board B,int r,int c,int dr,int dc)
+{
+  int r1 = r + dr;//被跳过的棋子
+  int c1 = c + dc;
+  int r2 = r + 2 * dr;//终点的棋子
+  int c2 = c + 2 * dc;
+  if(r1<0 || r1>=8 || c1<0 || c1>=8 || r2<0 || r2>=8 || c2<0 || c2>=8) return false;
+  int from = r * 8 + c;
+  int mid = r1 * 8 + c1;
+  int to = r2 * 8 + c2;
+  //from有棋子 mid有棋子 to是空位置
+  return (B[from]==1 && B[mid]==1 && B[to]==0);
+}
+
+//执行移动
+void do_move(board B, int r, int c, int dr, int dc,int func)
+{
+  int from = r * 8 + c;
+  int mid = (r+dr)*8 +(c+dc);
+  int to = (r + 2 * dr)*8 + (c + 2 * dc);
+  if(func==1)//正常运动
+  {
+    B[from] = 0;
+    B[mid] = 0;
+    B[to] = 1;
+  }
+  else if(func==0)//撤回操作
+  {
+    B[from] = 1;
+    B[mid] = 1;
+    B[to] = 0;
+  }
+}
+//peg1中要求写一个递归的辅助函数solve，它将被peg_solve调用
+//这个辅助函数的参数应该包括棋盘、当前的操作堆栈、棋盘上剩下的棋子个数
+int solve(board B , stack S , int num_pegs)
+{
+  if(num_pegs==1) return 1;//只剩下一个棋子说明已完成
+
+  int min_pegs = num_pegs;
+
+  int[] dr = alloc_array(int,4);//四个移动方向
+  int[] dc = alloc_array(int,4);
+  dr[0] = -1; dc[0] = 0;
+  dr[1] = 0; dc[1] = 1;
+  dr[2] = 1; dc[2] = 0;
+  dr[3] = 0; dc[3] = -1;
+  for(int r=0;r<8;r++)
+  {
+    for(int c=0;c<8;c++)
+    {
+      if(B[r*8+c]==1)//当前位置有棋子
+      {
+        //让他尝试向四个方向移动
+        for(int d = 0 ; d < 4 ; d++)
+        {
+          if(is_valid_move(B,r,c,dr[d],dc[d]))//检查这样的移动是否合法
+          {
+            do_move(B,r,c,dr[d],dc[d],1);//移动
+            int result = solve(B,S,num_pegs-1);//递归调用下一步
+            if(result==1)
+            {
+              int tor = r + 2*dr[d];
+              int toc = c + 2*dc[d];
+              move m = (r*8+c)*64 + (tor*8+toc);
+              push(S,m);//把这个移动记录到堆栈
+              return 1;
+            }
+            if(result < min_pegs) min_pegs = result;
+
+            do_move(B,r,c,dr[d],dc[d],0);//回溯
+          }
+        }
+      }
+    }
+  }
+  return min_pegs;
+}
+
+
+
+int peg_solve(board B, stack S)
+//@requires is_board(B);
+//@requires num_pegs(B) >= 1;
+//@requires stack_empty(S);
+//@ensures is_board(B);
+//@ensures \result >= 1;
+{
+  return solve(B,S,num_pegs(B));
+}

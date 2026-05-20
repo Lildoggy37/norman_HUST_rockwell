@@ -1,0 +1,17 @@
+int count_distinct(string[] A, int n)
+//@requires 0 <= n&& n <= \length(A);
+//@requires is_sorted(A, 0, n);
+{
+    if(n==0) return 0;
+    int count = 1;
+    for(int i=1;i<n;i++)
+    //@loop_invariant 1<=i && i<=n;
+    {
+        if(!string_equal(A[i-1],A[i]))
+        {
+            count++;
+        }
+    }
+
+    return count;
+}

@@ -1,0 +1,117 @@
+/*
+ * Clac, stack-based calculator language
+ *
+ * 15-122 Principles of Imperative Computation
+ */
+
+#use <string>
+#use <parse>
+#use <conio>
+#use <args>
+#use <util>
+
+/* Return true: clac top-level interpreter will expect more input */
+/* Return false: clac top-level interpreter will exit */
+bool eval(queue Q, stack S)
+//@ensures \result == false || queue_empty(Q);
+{
+  while (!queue_empty(Q)) {
+    string tok = deq(Q); /* is this dequeue safe? */
+    // print("Read: "); print(tok); print("\n");
+    if (string_equal(tok, "print")) {
+      if(stack_empty(S)) error("print:empty stack");
+      /* next line is unsafe and should be fixed */
+      int x = pop(S);
+      printint(x); print("\n");
+    } else if (string_equal(tok, "quit")) {
+      return false;             /* do not continue */
+    }
+    else if (string_equal(tok, "+")) {
+      if (stack_empty(S)) error("+: too few elements");
+      int y = pop(S);
+      if (stack_empty(S)) error("+: too few elements");
+      int x = pop(S);
+      push(S, x + y);
+    } 
+    else if (string_equal(tok, "-")) {
+      if (stack_empty(S)) error("-: too few elements");
+      int y = pop(S); //注意出栈顺序：先出栈的是减数 y
+      if (stack_empty(S)) error("-: too few elements");
+      int x = pop(S); //后出栈的是被减数 x
+      push(S, x - y);
+    } 
+    else if (string_equal(tok, "*")) {
+      if (stack_empty(S)) error("*: too few elements");
+      int y = pop(S);
+      if (stack_empty(S)) error("*: too few elements");
+      int x = pop(S);
+      push(S, x * y);
+    } 
+    else if (string_equal(tok, "/")) {
+      if (stack_empty(S)) error("/: too few elements");
+      int y = pop(S);
+      if (stack_empty(S)) error("/: too few elements");
+      int x = pop(S);
+     
+      if (y == 0) error("division by zero");
+      if (x == -2147483648 && y == -1) error("overflow in division");
+      push(S, x / y);
+    } 
+    else if (string_equal(tok, "%")) {
+      if (stack_empty(S)) error("%: too few elements");
+      int y = pop(S);
+      if (stack_empty(S)) error("%: too few elements");
+      int x = pop(S);
+      if (y == 0) error("modulus by zero");
+      if (x == -2147483648 && y == -1) error("overflow in modulus");
+      push(S, x % y);
+    } 
+    else if (string_equal(tok, "<")) {
+      if (stack_empty(S)) error("<: too few elements");
+      int y = pop(S);
+      if (stack_empty(S)) error("<: too few elements");
+      int x = pop(S);
+      if (x < y) push(S, 1);
+      else push(S, 0);
+    } 
+    else if (string_equal(tok, "drop")) {
+      if (stack_empty(S)) error("drop: empty stack");
+      pop(S);
+    } 
+    else if (string_equal(tok, "swap")) {
+      if (stack_empty(S)) error("swap: too few elements");
+      int y = pop(S);
+      if (stack_empty(S)) error("swap: too few elements");
+      int x = pop(S);
+      push(S, y);
+      push(S, x);
+    } 
+    else if (string_equal(tok, "dup")) {
+      if (stack_empty(S)) error("dup: empty stack");
+      int x = pop(S);
+      push(S, x);
+      push(S, x); // 压入两次，达到复制效果
+    } 
+    else if (string_equal(tok, "rot")) {
+      if (stack_empty(S)) error("rot: too few elements");
+      int z = pop(S);
+      if (stack_empty(S)) error("rot: too few elements");
+      int y = pop(S);
+      if (stack_empty(S)) error("rot: too few elements");
+      int x = pop(S);
+      push(S, y);
+      push(S, z);
+      push(S, x);
+    } 
+    else {
+      /* not defined as an operation name, should be an int */
+      int* p = parse_int(tok, 10);
+      if (p == NULL) { /* not an int */
+        /* call error(msg) which prints msg and aborts */
+        error(string_join("undefined token ", tok));
+      }
+      push(S, *p);
+    }
+  }
+  return true;                  /* continue */
+}

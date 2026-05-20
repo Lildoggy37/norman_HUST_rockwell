@@ -1,0 +1,17 @@
+bool all_distinct(string[] A, int n)
+//@requires 0 <= n && n <= \length(A);
+//@requires is_sorted(A, 0, n);
+{
+
+    for(int i=1;i<n;i++)
+    //@loop_invariant 1<=i && i<=n;
+    {
+        if(string_equal(A[i-1],A[i]))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+

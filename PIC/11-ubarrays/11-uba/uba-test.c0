@@ -1,0 +1,71 @@
+#use <string>
+#use <conio>
+
+int main() {
+  uba_t A = uba_new(3);
+  assert(uba_len(A) == 3);
+  assert(string_equal(uba_get(A, 0), ""));
+  assert(string_equal(uba_get(A, 1), ""));
+  assert(string_equal(uba_get(A, 2), ""));
+  uba_set(A, 1, "Hello");
+  uba_set(A, 2, "World");
+  assert(string_equal(uba_get(A, 0), ""));
+  assert(string_equal(uba_get(A, 1), "Hello"));
+  assert(string_equal(uba_get(A, 2), "World"));
+
+  printf("Client view: ");  uba_print(A);          printf("\n");
+    // BREAKS INTERFACE
+  printf("Library view: "); uba_print_internal(A); printf("\n\n");
+
+
+  for (int i = 3; i < 40; i++) {
+    uba_add(A, string_fromint(i));
+    assert(i+1 == uba_len(A));
+    assert(string_equal(uba_get(A, i), string_fromint(i)));
+
+    printf("Client view: ");  uba_print(A);          printf("\n");
+    // BREAKS INTERFACE
+    printf("Library view: "); uba_print_internal(A); printf("\n");
+  }
+  printf("\n");
+
+  while(uba_len(A) > 3) {
+    assert(string_equal(string_fromint(uba_len(A)-1), uba_rem(A)));
+
+    // BREAKS INTERFACE
+    uba_print_internal(A); printf("\n");
+  }
+  printf("\n");
+
+  assert(uba_len(A) == 3 && string_equal(uba_rem(A), "World"));
+  printf("After rem: A->size = %d, A->limit = %d\n", A->size, A->limit);
+  assert(uba_len(A) == 2 && string_equal(uba_rem(A), "Hello"));
+  printf("After rem: A->size = %d, A->limit = %d\n", A->size, A->limit);
+  assert(uba_len(A) == 1 && string_equal(uba_rem(A), ""));
+  printf("After rem: A->size = %d, A->limit = %d\n", A->size, A->limit);
+  assert(uba_len(A) == 0);
+  printf("After rem: A->size = %d, A->limit = %d\n", A->size, A->limit);
+
+  for (int i = 0; i < 15; i++) {
+    uba_add(A, "foo");
+
+    printf("Client view: ");  uba_print(A);          printf("\n");
+    // BREAKS INTERFACE
+    printf("Library view: "); uba_print_internal(A); printf("\n");
+  }
+  printf("\n");
+
+  assert(uba_len(A) == 15);
+
+  uba_t B = uba_new(1);
+  assert(uba_len(B) == 1);
+  assert(string_equal(uba_rem(B), ""));
+  assert(uba_len(B) == 0);
+  uba_add(B, "a");
+  uba_add(B, "b");
+  uba_add(B, "c");
+  assert(uba_len(B) == 3);
+
+  printf("All tests passed!\n");
+  return 0;
+}

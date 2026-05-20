@@ -1,0 +1,21 @@
+#use <conio>
+#use <string>
+
+int main()
+{
+    string [] A = alloc_array(string,3);
+
+    A[0]="bb";
+    A[1]="aa";
+    A[2]="aa";
+
+    sort(A,0,3);
+
+    //下面捕捉sort没有成功进行排序的情况
+    //@assert string_equal(A[0],"aa");
+    //@assert string_equal(A[1],"aa");
+    //@assert string_equal(A[2],"bb");
+    
+    return 0;
+
+}
