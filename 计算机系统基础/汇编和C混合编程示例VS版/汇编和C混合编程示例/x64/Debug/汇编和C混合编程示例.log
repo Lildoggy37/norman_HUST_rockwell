@@ -1,0 +1,9 @@
+﻿  Assembling computeAverageScore.asm...
+computeAverageScore.asm(1): error A2008: syntax error : .
+computeAverageScore.asm(2): error A2008: syntax error : .
+computeAverageScore.asm(25): error A2008: syntax error : printf
+computeAverageScore.asm(26): error A2008: syntax error : printf
+computeAverageScore.asm(28): error A2008: syntax error : printf
+computeAverageScore.asm(29): error A2008: syntax error : printf
+computeAverageScore.asm(32): warning A6004: procedure argument or local not referenced : num
+F:\vscode2022\MSBuild\Microsoft\VC\v170\BuildCustomizations\masm.targets(70,5): error MSB3721: 命令“ml64.exe /c /nologo /Zi /Fo"x64\Debug\computeAverageScore.obj" /W3 /errorReport:prompt  /TacomputeAverageScore.asm”已退出，返回代码为 1。

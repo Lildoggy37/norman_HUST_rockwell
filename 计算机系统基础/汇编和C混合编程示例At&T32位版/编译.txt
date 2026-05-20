@@ -1,0 +1,5 @@
+1. 安装gcc-multilib，支持32位程序
+sudo apt install gcc-multilib
+
+2. 混合编译
+gcc -m32 main.c average.s -o test

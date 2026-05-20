@@ -1,0 +1,5 @@
+﻿  Assembling computeAverageScore.asm...
+computeAverageScore.asm(32): warning A6004: procedure argument or local not referenced : num
+  main.c
+LINK : warning LNK4098: 默认库“libcmt.lib”与其他库的使用冲突；请使用 /NODEFAULTLIB:library
+  汇编和C混合编程示例.vcxproj -> C:\教学\本科教学\计算机系统基础\计算机系统基础实验\汇编和C混合编程示例\Debug\汇编和C混合编程示例.exe
