@@ -82,9 +82,13 @@ def isApriori(Ck_item, Lk_sub_1):
     :return:true or false
     """
     #--------------------------begin----------------------
-
+    for item in Ck_item:
+        sub_Ck = Ck_item - frozenset([item])
+        if sub_Ck not in Lk_sub_1:
+            return False
+    return True
     #---------------------------end-----------------------
-    
+
 
 def createCk(Lk_sub_1, k):
     """
@@ -99,7 +103,22 @@ def createCk(Lk_sub_1, k):
     # 3. 剪枝步：使用先验性质，删除非频繁的子集
     #return Ck
     #--------------------------begin----------------------
+    Ck = set()
+    Lk_list = [sorted(list(item)) for item in Lk_sub_1]
+    len_Lk = len(Lk_list)
 
+    for i in range(len_Lk):
+        for j in range(i + 1, len_Lk):
+            item1 = Lk_list[i]
+            item2 = Lk_list[j]
+            # 连接步：前k-2项相同
+            if item1[:k-2] == item2[:k-2]:
+                candidate = frozenset(Lk_list[i]) | frozenset(Lk_list[j])
+                # 剪枝步
+                if len(candidate) == k and isApriori(candidate, Lk_sub_1):
+                    Ck.add(candidate)
+
+    return sorted(Ck, key=lambda x: sorted(list(x)))
     #---------------------------end-----------------------
    
     #return Ck
@@ -122,7 +141,23 @@ def generateLkByCk(data_set, Ck, min_support, support_data):
     # 4. 将符合条件的项集加入Lk，并更新support_data
     #return Lk
     #--------------------------begin----------------------
+    item_count = {}
+    total = len(data_set)
 
+    for t in data_set:
+        t_set = set(t)
+        for item in Ck:
+            if item.issubset(t_set):
+                item_count[item] = item_count.get(item, 0) + 1
+
+    Lk = []
+    for item, count in sorted(item_count.items(), key=lambda x: sorted(list(x[0]))):
+        support = count / total
+        if support >= min_support:
+            Lk.append(item)
+            support_data[item] = support
+
+    return Lk
     #---------------------------end-----------------------
    
     #return LK
@@ -189,9 +224,31 @@ def generateRule(L, support_data, min_confidence):
     # 4. 如果置信度 >= min_confidence，生成规则
     #return rule_list
     #--------------------------begin----------------------
+    rule_list = []
 
+    for i in range(1, len(L)):
+        for frequent_set in L[i]:
+            items = sorted(list(frequent_set))
+            n = len(items)
+            # 枚举所有非空真子集作为前提
+            for j in range(1, (1 << n) - 1):
+                premise_list = []
+                conclusion_list = []
+                for bit in range(n):
+                    if j & (1 << bit):
+                        premise_list.append(items[bit])
+                    else:
+                        conclusion_list.append(items[bit])
+                premise = frozenset(premise_list)
+                conclusion = frozenset(conclusion_list)
+                confidence = support_data[frequent_set] / support_data[premise]
+                if confidence >= min_confidence:
+                    rule_list.append([premise, conclusion, confidence])
+
+    rule_list.sort(key=lambda x: (-x[2], sorted(list(x[0])), sorted(list(x[1]))))
+    return rule_list
     #---------------------------end-----------------------
-    
+
     #return rule_list
 
 if __name__ == "__main__":
