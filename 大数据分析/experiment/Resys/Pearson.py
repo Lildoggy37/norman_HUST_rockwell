@@ -41,21 +41,23 @@ def pearson_sim():
     #--------------begin---------------------
     mat = uti.values
     n_users = user_count
-    similar = np.zeros((n_users, n_users)) # 初始化similar矩阵
+    similar = np.zeros((n_users, n_users))
 
     for i in range(n_users):
+        xi = mat[i]
+        xi_mean = xi.mean()
+        xi_centered = xi - xi_mean
+        norm_i = np.sqrt(np.sum(xi_centered ** 2))
         for j in range(i, n_users):
-            mask = (mat[i] > 0) & (mat[j] > 0)
-            if mask.sum() == 0: # 无共同评分时相似度为0
+            xj = mat[j]
+            xj_mean = xj.mean()
+            xj_centered = xj - xj_mean
+            norm_j = np.sqrt(np.sum(xj_centered ** 2))
+            den = norm_i * norm_j
+            if den == 0:
                 sim = 0.0
             else:
-                xi = mat[i][mask]
-                xj = mat[j][mask]
-                xi_centered = xi - xi.mean()
-                xj_centered = xj - xj.mean()
-                num = np.sum(xi_centered * xj_centered)
-                den = np.sqrt(np.sum(xi_centered ** 2)) * np.sqrt(np.sum(xj_centered ** 2))
-                sim = num / den if den > 0 else 0.0
+                sim = np.sum(xi_centered * xj_centered) / den
             similar[i][j] = sim
             similar[j][i] = sim
 
@@ -81,7 +83,7 @@ def recommend(userID, sim_matrix, k_sim_user=10, topn_rec_movies=5):
     top_k_idx = top_k_idx[np.argsort(user_sims[top_k_idx])[::-1]]
 
     user_ratings = uti.iloc[user_idx]
-    unrated = user_ratings[user_ratings == 0].index.tolist()
+    unrated = user_ratings[user_ratings == 0].index.tolist() # 未评分的候选电影
 
     recs = []
     for movie in unrated:
