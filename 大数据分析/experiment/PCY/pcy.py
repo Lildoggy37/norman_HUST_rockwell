@@ -108,7 +108,17 @@ def generateC2(data_set, L1_set, vector, buckets_len):
     
     # 对每个事务，生成所有可能的2项组合
     #--------------------------begin--------------------------
-    
+    for t in data_set:
+        t_list = list(t)
+        for i in range(len(t_list)):
+            for j in range(i + 1, len(t_list)):
+                a, b = t_list[i], t_list[j]
+                if frozenset([a]) not in L1_set or frozenset([b]) not in L1_set:
+                    continue # 不在L1的情况
+                h = getHashCode(a, b, buckets_len) # 检查哈希捅是否频繁
+                if (vector >> h) & 1 == 0:
+                    continue # 不频繁的情况
+                C2_dict[frozenset([a, b])] = 1 # 加入候选集
     #-------------------------end-----------------------------
     # 排序返回
     result = sorted(list(C2_dict.keys()), key=lambda x: sorted(x))
@@ -188,7 +198,19 @@ def generateVector(data_set, buckets_len, min_support):
     for t in data_set:
         # t是元组，已经排序
     #--------------------------begin--------------------------
-    
+        t_list = list(t)
+        for i in range(len(t_list)):
+            for j in range(i + 1, len(t_list)):
+                a, b = t_list[i], t_list[j]
+                h = getHashCode(a, b, buckets_len)
+                buckets[h] += 1
+
+    threshold = min_support * len(data_set)
+    vector = 0
+    for i in range(buckets_len):
+        if buckets[i] >= threshold:
+            vector |= (1 << i)
+    return vector
     #-------------------------end-----------------------------
 
 def firstPass(data_set, buckets_len, min_support):
