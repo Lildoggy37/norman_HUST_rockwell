@@ -39,31 +39,41 @@ def pearson_sim():
     # 2. 两层循环计算任意两个用户评分向量的 Pearson 相关系数
     # 3. 保证矩阵对称填充 similar[i][j] 和 similar[j][i]
     #--------------begin---------------------
+    uti_np = uti.values
+    user_count = uti_np.shape[0]
     similar = np.zeros((user_count, user_count))
-    users_values = uti.values 
-    
+
     for i in range(user_count):
-        similar[i][i] = 1.0  # 自己与自己的相似度为 1
-        x = users_values[i]
-        mean_x = np.mean(x)
-        
-        for j in range(i + 1, user_count):
-            y = users_values[j]
-            mean_y = np.mean(y)
-            
-            # 计算 Pearson 公式分子和分母
-            num = np.sum((x - mean_x) * (y - mean_y))
-            den = np.sqrt(np.sum((x - mean_x)**2)) * np.sqrt(np.sum((y - mean_y)**2))
-            
+        for j in range(i, user_count):
+            if i == j:
+                similar[i][j] = 1.0
+                continue
+
+            # 只取两个用户共同评分过的电影
+            mask = (uti_np[i] > 0) & (uti_np[j] > 0)
+
+            if np.sum(mask) < 2:
+                similar[i][j] = 0.0
+                similar[j][i] = 0.0
+                continue
+
+            common_i = uti_np[i][mask]
+            common_j = uti_np[j][mask]
+
+            mean_i = np.mean(common_i)
+            mean_j = np.mean(common_j)
+
+            num = np.sum((common_i - mean_i) * (common_j - mean_j))
+            den = np.sqrt(np.sum((common_i - mean_i) ** 2) * np.sum((common_j - mean_j) ** 2))
+
             if den == 0:
-                sim = 0.0
+                corr = 0.0
             else:
-                sim = num / den
-                
-            # 保证矩阵对称填充
-            similar[i][j] = sim
-            similar[j][i] = sim
-            
+                corr = num / den
+
+            similar[i][j] = corr
+            similar[j][i] = corr
+
     return similar
     #--------------end---------------------
 
@@ -75,17 +85,17 @@ def recommend(userID, sim_matrix, k_sim_user=10, topn_rec_movies=5):
     # 3. 按相似度加权平均预测评分
     # 4. 返回前 topn_rec_movies 个推荐：(movieId, title, genres, predict_rating)
     #--------------begin---------------------
-    # 获取目标用户在矩阵中的索引
+    # 获取目标用户索引
     user_idx = list(uti.index).index(str(userID))
     
-    # 获取目标用户与其他所有用户的相似度，排除自己（将自身相似度置为极小值）
+    # 获取相似度并排除目标用户自身
     user_sims = sim_matrix[user_idx].copy()
-    user_sims[user_idx] = -np.inf
+    user_sims[user_idx] = -np.inf 
     
-    # 获取最相似的前 K 个用户索引
+    # 获取相似度最高的 K 个用户
     top_k_indices = np.argsort(user_sims)[-k_sim_user:][::-1]
     
-    # 找到目标用户未评分的电影
+    # 找到目标用户未评分电影
     user_ratings = uti.iloc[user_idx]
     unrated_movies = user_ratings[user_ratings == 0].index
     
@@ -99,19 +109,15 @@ def recommend(userID, sim_matrix, k_sim_user=10, topn_rec_movies=5):
             if rating > 0:  # 相似用户对该电影有过评分
                 num += sim * rating
                 den += sim
-        
-        # 若分母为 0 则回退为 2.5 分
+                
         if den == 0:
-            pred = 2.5
-        else:
-            pred = num / den
+            continue
+        pred = round(num / den, 4)
         preds.append((movie, pred))
         
-    # 按预测评分从高到低排序，并截取前 topn_rec_movies 个
-    preds.sort(key=lambda x: x[1], reverse=True)
+    preds.sort(key=lambda x: (x[1], -int(x[0])), reverse=True)
     top_n = preds[:topn_rec_movies]
     
-    # 格式化输出: (movieId, title, genres, predict_rating)
     res = []
     for movie_id, pred_rating in top_n:
         m_id = int(movie_id)
@@ -135,23 +141,23 @@ def prediction_test_set(sim_matrix, k_sim_user):
     uti_cols = set(uti.columns)
     
     for index, row in rating_test.iterrows():
-        # pandas 读取时可能为数值类型，需转为对应字符串匹配 uti
         u_id = str(int(row['userId']))
         m_id = str(int(row['movieId']))
         
-        # 目标用户不在训练集中，直接回退为 2.5
+        # 用户不在训练集中
         if u_id not in user_list:
             predictions.append(2.5)
             continue
             
         user_idx = user_list.index(u_id)
         user_sims = sim_matrix[user_idx].copy()
-        user_sims[user_idx] = -np.inf
+        user_sims[user_idx] = -np.inf  # 排除自身
         top_k_indices = np.argsort(user_sims)[-k_sim_user:][::-1]
         
         num = 0.0
         den = 0.0
-        # 电影在训练集中有过记录
+        
+        # 只有该电影在训练集存在，才能取相似用户对它的评分
         if m_id in uti_cols:
             for idx in top_k_indices:
                 sim = user_sims[idx]
@@ -163,7 +169,7 @@ def prediction_test_set(sim_matrix, k_sim_user):
         if den == 0:
             predictions.append(2.5)
         else:
-            predictions.append(num / den)
+            predictions.append(round(num / den, 4))
             
     return np.array(predictions)
     #--------------end---------------------
